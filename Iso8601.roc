@@ -26,7 +26,6 @@ utf8ToMsSinceEpoch : List U8 -> Result U64 [BadIso8601Date _]
 utf8ToMsSinceEpoch = \bytes ->
     utf8ToComponents bytes
     |> Result.try componentsToMsSinceEpoch
-    |> Result.mapErr BadIso8601Date
 
 strToComponents : Str -> Result Components [BadIso8601Date _]
 strToComponents = \str -> utf8ToComponents (Str.toUtf8 str)
@@ -140,18 +139,19 @@ validateMonthDay = \{ year, month, day } ->
         _ ->
             parseErr (InvalidMonth month)
 
+## Convenience for writing (Err (BadIso8601Date ___))
 parseErr : err -> [Err [BadIso8601Date err]]
 parseErr = \err -> Err (BadIso8601Date err)
 
 # TODO Why can't the signature be something like this?
 # msInMonth : Int m, Int b -> Result (Int *) [InvalidMonth (Int m), InvalidDay (Int d)]
-msInMonth : YearMonthDay -> Result U64 [InvalidMonth U32, InvalidDay U32]
+msInMonth : YearMonthDay -> Result U64 [BadIso8601Date [InvalidMonth U32, InvalidDay U32]]
 msInMonth = \{ month, day: dayInMonth, year } ->
     when month is
         1 ->
             # 31 days in January
             if dayInMonth > 31 || dayInMonth == 0 then
-                Err (InvalidDay dayInMonth)
+                parseErr (InvalidDay dayInMonth)
             else
                 # Add 0 days when in the first month of the year
                 Ok 0
@@ -159,7 +159,7 @@ msInMonth = \{ month, day: dayInMonth, year } ->
         2 ->
             # 28 days in February unless it's a leap year; then 29)
             if (dayInMonth > 29) || (dayInMonth == 29 && !(isLeapYear year)) || dayInMonth == 0 then
-                Err (InvalidDay dayInMonth)
+                parseErr (InvalidDay dayInMonth)
             else
                 # 31 days in January
                 Ok (31 * 24 * 60 * 60 * 1000)
@@ -167,7 +167,7 @@ msInMonth = \{ month, day: dayInMonth, year } ->
         3 ->
             # 31 days in March
             if dayInMonth > 31 || dayInMonth == 0 then
-                Err (InvalidDay dayInMonth)
+                parseErr (InvalidDay dayInMonth)
             else
                 # 28 days in February (leap years are handled elsewhere)
                 Ok ((28 + 31) * 24 * 60 * 60 * 1000)
@@ -175,7 +175,7 @@ msInMonth = \{ month, day: dayInMonth, year } ->
         4 ->
             # 30 days in April
             if dayInMonth > 30 || dayInMonth == 0 then
-                Err (InvalidDay dayInMonth)
+                parseErr (InvalidDay dayInMonth)
             else
                 # 31 days in March
                 Ok ((31 + 28 + 31) * 24 * 60 * 60 * 1000)
@@ -183,7 +183,7 @@ msInMonth = \{ month, day: dayInMonth, year } ->
         5 ->
             # 31 days in May
             if dayInMonth > 31 || dayInMonth == 0 then
-                Err (InvalidDay dayInMonth)
+                parseErr (InvalidDay dayInMonth)
             else
                 # 30 days in April
                 Ok ((30 + 31 + 28 + 31) * 24 * 60 * 60 * 1000)
@@ -191,7 +191,7 @@ msInMonth = \{ month, day: dayInMonth, year } ->
         6 ->
             # 30 days in June
             if dayInMonth > 30 || dayInMonth == 0 then
-                Err (InvalidDay dayInMonth)
+                parseErr (InvalidDay dayInMonth)
             else
                 # 31 days in May
                 Ok ((31 + 30 + 31 + 28 + 31) * 24 * 60 * 60 * 1000)
@@ -199,7 +199,7 @@ msInMonth = \{ month, day: dayInMonth, year } ->
         7 ->
             # 31 days in July
             if dayInMonth > 31 || dayInMonth == 0 then
-                Err (InvalidDay dayInMonth)
+                parseErr (InvalidDay dayInMonth)
             else
                 # 30 days in June
                 Ok ((30 + 31 + 30 + 31 + 28 + 31) * 24 * 60 * 60 * 1000)
@@ -207,7 +207,7 @@ msInMonth = \{ month, day: dayInMonth, year } ->
         8 ->
             # 31 days in August
             if dayInMonth > 31 || dayInMonth == 0 then
-                Err (InvalidDay dayInMonth)
+                parseErr (InvalidDay dayInMonth)
             else
                 # 31 days in July
                 Ok ((31 + 30 + 31 + 30 + 31 + 28 + 31) * 24 * 60 * 60 * 1000)
@@ -215,7 +215,7 @@ msInMonth = \{ month, day: dayInMonth, year } ->
         9 ->
             # 30 days in September
             if dayInMonth > 30 || dayInMonth == 0 then
-                Err (InvalidDay dayInMonth)
+                parseErr (InvalidDay dayInMonth)
             else
                 # 31 days in August
                 Ok ((31 + 31 + 30 + 31 + 30 + 31 + 28 + 31) * 24 * 60 * 60 * 1000)
@@ -223,7 +223,7 @@ msInMonth = \{ month, day: dayInMonth, year } ->
         10 ->
             # 31 days in October
             if dayInMonth > 31 || dayInMonth == 0 then
-                Err (InvalidDay dayInMonth)
+                parseErr (InvalidDay dayInMonth)
             else
                 # 30 days in September
                 Ok ((30 + 31 + 31 + 30 + 31 + 30 + 31 + 28 + 31) * 24 * 60 * 60 * 1000)
@@ -231,7 +231,7 @@ msInMonth = \{ month, day: dayInMonth, year } ->
         11 ->
             # 30 days in November
             if dayInMonth > 30 || dayInMonth == 0 then
-                Err (InvalidDay dayInMonth)
+                parseErr (InvalidDay dayInMonth)
             else
                 # 31 days in October
                 Ok ((31 + 30 + 31 + 31 + 30 + 31 + 30 + 31 + 28 + 31) * 24 * 60 * 60 * 1000)
@@ -239,16 +239,16 @@ msInMonth = \{ month, day: dayInMonth, year } ->
         12 ->
             # 31 days in December
             if dayInMonth > 31 || dayInMonth == 0 then
-                Err (InvalidDay dayInMonth)
+                parseErr (InvalidDay dayInMonth)
             else
                 # 30 days in November
                 Ok ((30 + 31 + 30 + 31 + 31 + 30 + 31 + 30 + 31 + 28 + 31) * 24 * 60 * 60 * 1000)
 
         _ ->
-            Err (InvalidMonth month)
+            parseErr (InvalidMonth month)
 
-componentsToMsSinceEpoch : Components -> Result U64 [InvalidMonth U32, InvalidDay U32]
-componentsToMsSinceEpoch = \{ year, month, day: dayInMonth, hour, second, millisecond } ->
+componentsToMsSinceEpoch : Components -> Result U64 [BadIso8601Date [InvalidMonth U32, InvalidDay U32]]
+componentsToMsSinceEpoch = \{ year, month, day: dayInMonth, hour, minute, second, millisecond } ->
     when msInMonth { year: year, month: Num.toU32 month, day: Num.toU32 dayInMonth } is
         Ok monthMs ->
             days =
@@ -266,16 +266,33 @@ componentsToMsSinceEpoch = \{ year, month, day: dayInMonth, hour, second, millis
                     dayInMonth
 
             # one extra day for each leap year
-            dayMs = msPerDay * (Num.toU32 days + (leapYearsBefore year - leapYearsBefore epochYear))
+            dayMs =
+                leapYearsBefore year
+                |> Num.subWrap (leapYearsBefore epochYear)
+                |> Num.addWrap (Num.toU32 days)
+                |> Num.mulWrap msPerDay
+                |> Num.toU64
 
-            yearMs = msPerYear * (year - epochYear)
+            yearMs =
+                year
+                |> Num.subWrap epochYear
+                |> Num.mulWrap msPerYear
+                |> Num.toU64
 
-            # TODO incorporate hour - is this using a 12-hour or 24-hour clock?
-            # TODO incorporate minutes
-            # TODO incorporate seconds
-            # TODO incorporate milliseconds
+            utcOffsetMinutes = 0 # TODO parse this
 
-            Ok (Num.toU64 yearMs + Num.toU64 monthMs + Num.toU64 dayMs + Num.toU64 millisecond)
+            hourMs = Num.toU64 hour * 60 * 60 * 1000
+            minuteMs = (Num.toU64 minute - utcOffsetMinutes) * 60 * 1000
+            secondMs = Num.toU64 second * 1000
+
+            Num.toU64 monthMs
+            |> Num.addWrap yearMs
+            |> Num.addWrap dayMs
+            |> Num.addWrap hourMs
+            |> Num.addWrap minuteMs
+            |> Num.addWrap secondMs
+            |> Num.addWrap (Num.toU64 millisecond)
+            |> Ok
 
         Err err -> Err err
 
