@@ -249,7 +249,7 @@ msInMonth = \{ month, day: dayInMonth, year } ->
 
 componentsToMsSinceEpoch : Components -> Result U64 [BadIso8601Date [InvalidMonth U32, InvalidDay U32]]
 componentsToMsSinceEpoch = \{ year, month, day: dayInMonth, hour, minute, second, millisecond } ->
-    when msInMonth { year: year, month: Num.toU32 month, day: Num.toU32 dayInMonth } is
+    when msInMonth { year, month: Num.toU32 month, day: Num.toU32 dayInMonth } is
         Ok monthMs ->
             days =
                 if month < 3 || !(isLeapYear year) then
