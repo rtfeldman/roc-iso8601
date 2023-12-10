@@ -308,14 +308,14 @@ epochYear : Int _ # TODO should be able to annotate this as Int *
 epochYear = 1970
 
 chompYYYYMMDD : List U8 -> Result (YearMonthDay, List U8) _
-chompYYYYMMDD = \bytes ->
-    (yyyy, rest1) <- chomp4digits bytes |> try
-    rest2 <- chompSymbol '-' rest1 |> try
-    (mm, rest3) <- chomp2digits rest2 |> try
-    rest4 <- chompSymbol '-' rest3 |> try
-    (dd, rest5) <- chomp2digits rest4 |> try
+chompYYYYMMDD = \src ->
+    (yyyy, src) <- chomp4digits src |> try
+    src <- chompSymbol '-' src |> try
+    (mm, src) <- chomp2digits src |> try
+    src <- chompSymbol '-' src |> try
+    (dd, src) <- chomp2digits src |> try
 
-    Ok ({ year: yyyy, month: mm, day: dd }, rest5)
+    Ok ({ year: yyyy, month: mm, day: dd }, src)
 
 # Parse a date
 expect
@@ -344,8 +344,8 @@ isLeapYear = \year ->
     (year |> Num.rem 4) == 0 && (((year |> Num.rem 100) != 0) || (year |> Num.rem 400 == 0))
 
 leapYearsBefore : Int a -> Int a
-leapYearsBefore = \y1 ->
-    y = y1 - 1
+leapYearsBefore = \y ->
+    y = y - 1
 
     (y // 4) - (y // 100) + (y // 400)
 
@@ -399,30 +399,32 @@ leapYearsBefore = \y1 ->
 #         Err NonDigitByte
 
 chomp4digits : List U8 -> Result (U32, List U8) [NonDigitByte U8, Eof]
-chomp4digits = \bytes ->
-    (digit1, rest1) <- chompDigit bytes |> Result.try
-    (digit2, rest2) <- chompDigit rest1 |> Result.try
-    (digit3, rest3) <- chompDigit rest2 |> Result.try
-    (digit4, final) <- chompDigit rest3 |> Result.try
+chomp4digits = \src ->
+    (digit1, src) <- chompDigit src |> Result.try
+    (digit2, src) <- chompDigit src |> Result.try
+    (digit3, src) <- chompDigit src |> Result.try
+    (digit4, src) <- chompDigit src |> Result.try
 
     answer =
-        (digit1 |> Num.mulWrap 1000)
+        0
+        |> Num.addWrap (digit1 |> Num.mulWrap 1000)
         |> Num.addWrap (digit2 |> Num.mulWrap 100)
         |> Num.addWrap (digit3 |> Num.mulWrap 10)
-        |> Num.addWrap digit4
+        |> Num.addWrap (digit4 |> Num.mulWrap 1)
 
-    Ok (answer, final)
+    Ok (answer, src)
 
 chomp2digits : List U8 -> Result (U32, List U8) [NonDigitByte U8, Eof]
-chomp2digits = \bytes ->
-    (digit1, rest1) <- chompDigit bytes |> Result.try
-    (digit2, final) <- chompDigit rest1 |> Result.try
+chomp2digits = \src ->
+    (digit1, src) <- chompDigit src |> Result.try
+    (digit2, src) <- chompDigit src |> Result.try
 
     answer =
-        (digit1 |> Num.mulWrap 10)
-        |> Num.addWrap digit2
+        0
+        |> Num.addWrap (digit1 |> Num.mulWrap 10)
+        |> Num.addWrap (digit2 |> Num.mulWrap 1)
 
-    Ok (answer, final)
+    Ok (answer, src)
 
 # Parse YYYY
 expect
