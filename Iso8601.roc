@@ -308,14 +308,14 @@ epochYear : Int _ # TODO should be able to annotate this as Int *
 epochYear = 1970
 
 chompYYYYMMDD : List U8 -> Result (YearMonthDay, List U8) _
-chompYYYYMMDD = \src ->
-    (yyyy, src) <- chomp4digits src |> try
-    src <- chompSymbol '-' src |> try
-    (mm, src) <- chomp2digits src |> try
-    src <- chompSymbol '-' src |> try
-    (dd, src) <- chomp2digits src |> try
+chompYYYYMMDD = \$src ->
+    (yyyy, $src) <- chomp4digits $src |> try
+    $src <- chompSymbol '-' $src |> try
+    (mm, $src) <- chomp2digits $src |> try
+    $src <- chompSymbol '-' $src |> try
+    (dd, $src) <- chomp2digits $src |> try
 
-    Ok ({ year: yyyy, month: mm, day: dd }, src)
+    Ok ({ year: yyyy, month: mm, day: dd }, $src)
 
 # Parse a date
 expect
@@ -399,11 +399,11 @@ leapYearsBefore = \y ->
 #         Err NonDigitByte
 
 chomp4digits : List U8 -> Result (U32, List U8) [NonDigitByte U8, Eof]
-chomp4digits = \src ->
-    (digit1, src) <- chompDigit src |> Result.try
-    (digit2, src) <- chompDigit src |> Result.try
-    (digit3, src) <- chompDigit src |> Result.try
-    (digit4, src) <- chompDigit src |> Result.try
+chomp4digits = \$src ->
+    (digit1, $src) <- chompDigit $src |> Result.try
+    (digit2, $src) <- chompDigit $src |> Result.try
+    (digit3, $src) <- chompDigit $src |> Result.try
+    (digit4, $src) <- chompDigit $src |> Result.try
 
     answer =
         0
@@ -412,19 +412,19 @@ chomp4digits = \src ->
         |> Num.addWrap (digit3 |> Num.mulWrap 10)
         |> Num.addWrap (digit4 |> Num.mulWrap 1)
 
-    Ok (answer, src)
+    Ok (answer, $src)
 
 chomp2digits : List U8 -> Result (U32, List U8) [NonDigitByte U8, Eof]
-chomp2digits = \src ->
-    (digit1, src) <- chompDigit src |> Result.try
-    (digit2, src) <- chompDigit src |> Result.try
+chomp2digits = \$src ->
+    (digit1, $src) <- chompDigit $src |> Result.try
+    (digit2, $src) <- chompDigit $src |> Result.try
 
     answer =
         0
         |> Num.addWrap (digit1 |> Num.mulWrap 10)
         |> Num.addWrap (digit2 |> Num.mulWrap 1)
 
-    Ok (answer, src)
+    Ok (answer, $src)
 
 # Parse YYYY
 expect
